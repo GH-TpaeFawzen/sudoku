@@ -19,22 +19,22 @@ problem="7 0 0  0 9 0  0 0 3
 space=;
 
 
-function display9()
+display9()
 {
     echo " ==== Sudoku ===="
 
     for ((i=0; $i < 9; i++)); do
         for ((j=0; $j < 9; j++)); do
             idx=$(($i * 9 + $j + 1));
-            echo -n " "
-            echo -n "${space[$idx]}"
+            printf " "
+            printf "${space[$idx]}"
         done
         echo
     done
 }
 
 
-function initialize()
+initialize()
 {
     for ((i=0; $i < 9; i++)); do
         for ((j=0; $j < 9; j++)); do
@@ -45,7 +45,7 @@ function initialize()
 }
 
 
-function fix_if_necessary()
+fix_if_necessary()
 {
     local i;
     local j;
@@ -59,13 +59,13 @@ function fix_if_necessary()
 
     set ${space[$idx]};
 
-    if [ $# -eq 1 ]; then
-        fix_position $i $j $1;
-    fi
+    case $# in (1)
+        fix_position $i $j $1;;
+    esac
 }
 
 
-function not_possible()
+not_possible()
 {
     local i;
     local j;
@@ -84,18 +84,16 @@ function not_possible()
 
 #    echo "Unsetting from $i,$j ($@) => $val";
 
-    if [ $# -eq 1 ]; then
-        if [ $1 -eq $val ]; then
+    case $# in (1)
+        case $1 in ($val)
             echo "ERROR !! $i,$j had $1, but now unsetting $val"
-            exit 1;
-        fi
+            exit 1;;
+        esac
         return;
-    fi
+    esac
 
     for v in $@; do
-        if [ $v -eq $val ]; then
-            continue;
-        fi
+        case $v in ($val) continue;; esac
         new="$new $v";
     done
 
@@ -106,7 +104,7 @@ function not_possible()
 }
 
 
-function spread_vertical_awareness()
+spread_vertical_awareness()
 {
     local i;
     local j;
@@ -118,15 +116,13 @@ function spread_vertical_awareness()
     val=$3;
 
     for ((k=0; $k < 9; k++)); do
-        if [ $k -eq $i ]; then
-            continue;
-        fi
+        case $k in ($i) continue;; esac
         not_possible $k $j $val;
     done
 }
 
 
-function spread_horizontal_awareness()
+spread_horizontal_awareness()
 {
     local i;
     local j;
@@ -138,9 +134,7 @@ function spread_horizontal_awareness()
     val=$3;
 
     for ((k=0; $k < 9; k++)); do
-        if [ $k -eq $j ]; then
-            continue;
-        fi
+        case $k in ($j) continue;; esac
         not_possible $i $k $val;
     done
 }
@@ -166,20 +160,16 @@ function spread_block_awareness()
         for ((l=0; $l < 9; l++)); do
             blk=$(( ($k / 3) * 3 + ($l / 3)));
 
-            if [ $blk -ne $myblk ]; then
-                continue;
-            fi
+            case "$blk" in ($myblk) :;; (*) continue;; esac
 
-            if [ $k -eq $i -a $l -eq $j ]; then
-                continue;
-            fi
+            case "$k:$l" in ("$i:$j") continue;; esac
             not_possible $k $l $val;
         done
     done
 }
 
 
-function spread_awareness()
+spread_awareness()
 {
     spread_vertical_awareness "$@";
     spread_horizontal_awareness "$@";
@@ -187,7 +177,7 @@ function spread_awareness()
 }
 
 
-function fix_position()
+fix_position()
 {
     local i;
     local j;
@@ -208,7 +198,7 @@ function fix_position()
 }
 
 
-function start_play()
+start_play()
 {
     local i;
     local j;
@@ -219,15 +209,13 @@ function start_play()
     for ((i=0; $i < 9; i++)); do
         for ((j=0; $j < 9; j++)); do
             idx=$(($i * 9 + j + 1));
-            if [ ${!idx} -gt 0 ]; then
-                fix_position $i $j ${!idx};
-            fi
+            [ ${!idx} -gt 0 ] && fix_position $i $j ${!idx};
         done
     done
 }
 
 
-function main()
+main()
 {
     initialize;
 
